@@ -107,11 +107,6 @@ export default function Home() {
                 <div className="flex-grow z-10 min-w-0">
                   <div className="text-base sm:text-xl font-bold text-white mb-1 sm:mb-2 flex items-baseline flex-wrap">
                     <span className="truncate">{house.name}</span>
-                    <span
-                      className={`${instrument.className} lowercase ml-[0.25em]`}
-                    >
-                      House
-                    </span>
                     <div
                       className="w-3 h-3 sm:w-4 sm:h-4 rounded-full ml-2 sm:ml-3 shadow-[0_0_10px_rgba(255,255,255,0.2)]"
                       style={{ backgroundColor: house.color }}
