@@ -2,23 +2,23 @@ import { House } from "@/types";
 
 export const houses: House[] = [
   {
-    name: "Atharvas ",
+    name: "Adharvas ",
     color: "#008000",
-    points: 0,
+    points: 24,
   },
   {
     name: "Dhruvas ",
-    color: "#FFD800",
-    points: 0,
+    color: "#5D3FD3",
+    points: 6,
   },
   {
     name: "Kauravas ",
-    color: "#5D3FD3",
-    points: 0,
+    color: "#1F51FF",
+    points: 21,
   },
   {
     name: "Yodhas ",
     color: "#C41E3A",
-    points: 0,
+    points: 6,
   },
 ];
