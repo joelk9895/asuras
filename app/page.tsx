@@ -3,6 +3,8 @@ import ModelViewer from "@/components/ModelViewer";
 import { motion } from "framer-motion";
 import { Instrument_Serif } from "next/font/google";
 import { useHouses } from "@/hooks/useHouses";
+import { useEffect, useState } from "react";
+import EasterEggModal from "@/components/EasterEggModal";
 
 const instrument = Instrument_Serif({
   subsets: ["latin"],
@@ -11,6 +13,8 @@ const instrument = Instrument_Serif({
 
 export default function Home() {
   const { houses, loading, error } = useHouses();
+  const [clickCount, setClickCount] = useState(0);
+  const [showEasterEgg, setShowEasterEgg] = useState(false);
 
   // Sort houses by points and add rank
   const sortedHouses = [...houses]
@@ -20,6 +24,16 @@ export default function Home() {
   const topThree = sortedHouses.slice(0, 3);
   const maxPoints =
     houses.length > 0 ? Math.max(...houses.map((house) => house.points)) : 1;
+
+  const handleFirstPlaceClick = () => {
+    const newCount = clickCount + 1;
+    setClickCount(newCount);
+
+    if (newCount === 5) {
+      setShowEasterEgg(true);
+      setClickCount(0); // Reset for next time
+    }
+  };
 
   if (loading) {
     return (
@@ -34,6 +48,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-gray-900 to-black px-4 py-6 sm:p-8">
+      {showEasterEgg && (
+        <EasterEggModal onClose={() => setShowEasterEgg(false)} />
+      )}
+
       <img
         src="/logo.png"
         className="w-screen h-screen object-cover opacity-20 fixed top-0 left-0"
@@ -64,6 +82,8 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: index * 0.2 }}
               className="flex flex-col items-center mb-8 sm:mb-0"
+              onClick={index === 0 ? handleFirstPlaceClick : undefined}
+              style={index === 0 ? { cursor: "pointer" } : {}}
             >
               <ModelViewer position={house.rank} house={house.name} />
               <motion.div
