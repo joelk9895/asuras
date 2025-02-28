@@ -1,0 +1,18 @@
+{
+  "glyphs": {
+    "0": {"ha": 600, "x_min": 47, "x_max": 553, "o": "M 300 698 Q 211 698 129 618 Q 47 538 47 426 Q 47 314 129 234 Q 211 154 300 154 Q 389 154 471 234 Q 553 314 553 426 Q 553 538 471 618 Q 389 698 300 698 Z M 300 623 Q 357 623 407 573 Q 457 523 457 426 Q 457 329 407 278 Q 357 229 300 229 Q 243 229 193 278 Q 143 329 143 426 Q 143 523 193 573 Q 243 623 300 623 Z"},
+    "1": {"ha": 600, "x_min": 102, "x_max": 375, "o": "M 375 0 L 280 0 L 280 571 Q 238 532 185 504 Q 132 477 102 464 L 102 563 Q 186 606 248 661 Q 311 716 334 746 L 375 746 L 375 0 Z"},
+    "2": {"ha": 600, "x_min": 51, "x_max": 554, "o": "M 554 0 L 51 0 L 51 96 Q 135 179 225 277 Q 316 375 352 427 Q 389 480 389 527 Q 389 565 367 590 Q 345 615 303 615 Q 264 615 236 586 Q 208 557 207 512 L 108 512 Q 108 592 167 652 Q 226 712 303 712 Q 382 712 442 655 Q 503 598 503 524 Q 503 454 456 380 Q 409 307 342 232 L 554 232 L 554 0 Z"},
+    "3": {"ha": 600, "x_min": 47, "x_max": 557, "o": "M 304 712 Q 391 712 474 660 Q 557 609 557 524 Q 557 455 505 417 Q 551 379 551 307 Q 551 223 468 161 Q 385 100 304 100 Q 225 100 153 151 Q 81 203 78 290 L 172 290 Q 176 253 205 236 Q 234 218 284 218 Q 332 218 364 245 Q 396 272 396 310 Q 396 349 363 369 Q 331 389 286 389 L 255 389 L 255 485 L 291 485 Q 350 485 383 505 Q 417 526 417 568 Q 417 608 384 632 Q 351 656 294 656 Q 242 656 206 624 Q 171 592 176 538 L 81 538 Q 75 617 135 664 Q 196 712 304 712 Z"}
+  },
+  "familyName": "Inter",
+  "ascender": 968,
+  "descender": -241,
+  "underlinePosition": -184,
+  "underlineThickness": 49,
+  "boundingBox": {"yMin": -241, "xMin": -280, "yMax": 968, "xMax": 1310},
+  "resolution": 1000,
+  "original_font_information": {"format": 0, "copyright": "Copyright © 2020 The Inter Project Authors", "fontFamily": "Inter", "fontSubfamily": "Bold", "uniqueID": "3.19;RSMS;Inter-Bold", "fullName": "Inter Bold", "version": "Version 3.19", "postScriptName": "Inter-Bold", "trademark": "", "manufacturer": "The Inter Project Authors", "designer": "Rasmus Andersson", "description": "", "manufacturerURL": "", "designerURL": "https://rsms.me/", "license": "This Font Software is licensed under the SIL Open Font License, Version 1.1.", "licenseURL": "http://scripts.sil.org/OFL", "preferredFamily": "", "preferredSubfamily": ""},
+  "cssFontWeight": "bold",
+  "cssFontStyle": "normal"
+}
