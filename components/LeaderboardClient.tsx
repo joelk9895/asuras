@@ -1,17 +1,24 @@
 "use client";
-import ModelViewer from "@/components/ModelViewer";
+
 import { motion } from "framer-motion";
 import { Instrument_Serif } from "next/font/google";
-import { useHouses } from "@/hooks/useHouses";
+import ModelViewer from "@/components/ModelViewer";
+import { House } from "@/types";
 
 const instrument = Instrument_Serif({
   subsets: ["latin"],
   weight: "400",
 });
 
-export default function Home() {
-  const { houses, loading, error } = useHouses();
+interface LeaderboardClientProps {
+  houses: House[];
+  error: string | null;
+}
 
+export default function LeaderboardClient({
+  houses,
+  error,
+}: LeaderboardClientProps) {
   // Sort houses by points and add rank
   const sortedHouses = [...houses]
     .sort((a, b) => b.points - a.points)
@@ -20,17 +27,6 @@ export default function Home() {
   const topThree = sortedHouses.slice(0, 3);
   const maxPoints =
     houses.length > 0 ? Math.max(...houses.map((house) => house.points)) : 1;
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-gray-900 to-black flex items-center justify-center">
-        <div className="text-white text-xl">
-          <span className="inline-block animate-spin mr-3">⏳</span>
-          Loading house data...
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-gray-900 to-black px-4 py-6 sm:p-8">
@@ -53,7 +49,7 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          Leaderboard
+          House Senate Leaderboard
         </motion.h1>
 
         <div className="flex flex-col sm:flex-row items-center sm:items-end justify-center gap-8 sm:gap-4 md:gap-8 my-8 sm:my-16">

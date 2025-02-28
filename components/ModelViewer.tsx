@@ -7,7 +7,7 @@ import {
   Float,
   Sparkles,
 } from "@react-three/drei";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { Group, Mesh } from "three";
 import { Instrument_Serif } from "next/font/google";
 
@@ -405,6 +405,20 @@ const instrument = Instrument_Serif({
 });
 
 export default function ModelViewer({ position, house }: ModelViewerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // All DOM interactions must be inside useEffect
+    if (!containerRef.current) return;
+
+    // Your existing model viewer code here
+    // ...
+
+    return () => {
+      // Cleanup code here
+    };
+  }, [position, house]);
+
   let number: string;
   let color: TrophyColor;
 
@@ -436,6 +450,7 @@ export default function ModelViewer({ position, house }: ModelViewerProps) {
 
   return (
     <div
+      ref={containerRef}
       className={`w-52 h-52 sm:w-56 sm:h-56 md:w-64 md:h-64 bg-black/50 relative rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.2)] 
       overflow-hidden border border-white/10 backdrop-blur-md`}
       style={{
