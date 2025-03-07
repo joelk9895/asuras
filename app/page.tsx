@@ -5,6 +5,7 @@ import { Instrument_Serif } from "next/font/google";
 import { useHouses } from "@/hooks/useHouses";
 import { useEffect, useState } from "react";
 import EasterEggModal from "@/components/EasterEggModal";
+import Link from "next/link";
 
 const instrument = Instrument_Serif({
   subsets: ["latin"],
@@ -190,6 +191,22 @@ export default function Home() {
           </div>
         </motion.div>
       </main>
+      <motion.div
+        className="relative z-50 w-full max-w-xs mx-auto mt-10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.2, duration: 0.6 }}
+      >
+        <Link href="/game" className="block">
+          <div className="group bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-300 hover:from-amber-300 hover:via-yellow-500 hover:to-amber-400 text-amber-900 font-medium px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-center transform hover:-translate-y-1 active:translate-y-0">
+            <span className="block">Play a Game</span>
+            <span className="text-xs opacity-75">
+              while waiting for scores to update?
+            </span>
+          </div>
+        </Link>
+      </motion.div>
+
       <p className="mx-auto text-center mt-10 text-white/70 text-sm">
         Crafted by <span className={instrument.className}>pixellab</span>
       </p>
