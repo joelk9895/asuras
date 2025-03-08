@@ -4,6 +4,8 @@ export interface House {
   name: string;
   color: string;
   points: number;
+  layatharang: number;
+  chakravyuh: number;
   rank?: number;
 }
 
@@ -19,4 +21,24 @@ export interface NumberProps {
 export interface RotatingNumberProps {
   number: string;
   color: TrophyColor;
+}
+
+export interface LayatharangData {
+  event: string;
+  firstName: string | null;
+  firstHouse: string | null;
+  secondName: string | null;
+  secondHouse: string | null;
+  thirdName: string | null;
+  thirdHouse: string | null;
+}
+
+export interface ChakravyuhData {
+  event: string;
+  firstName: string | null;
+  firstHouse: string | null;
+  secondName: string | null;
+  secondHouse: string | null;
+  thirdName: string | null;
+  thirdHouse: string | null;
 }

@@ -182,7 +182,7 @@ export default forwardRef<GameMethods, GameComponentProps>(function GameComponen
 
   // Keep the keyboard toggle for desktop
   const toggleAvatar = () => {
-    setUseCustomAvatar((prev) => !prev);
+    setUseCustomAvatar((prev) => prev);
   };
 
   // Game loop
