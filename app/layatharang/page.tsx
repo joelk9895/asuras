@@ -12,9 +12,10 @@ const instrument = Instrument_Serif({
 });
 
 export default function LayatharangPage() {
-  const [data, setData] = useState<LayatharangData[] | null>(null);
+  const [rawData, setRawData] = useState<LayatharangData[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<string>("all");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -26,53 +27,7 @@ export default function LayatharangPage() {
         }
 
         const result = await response.json();
-
-        // Process the data to merge items with the same event name
-        const eventMap = new Map<string, LayatharangData[]>();
-
-        // Group by event name
-        result.forEach((item: LayatharangData) => {
-          if (!eventMap.has(item.event)) {
-            eventMap.set(item.event, []);
-          }
-          eventMap.get(item.event)?.push(item);
-        });
-
-        // Use the processed data
-        const processedData = Array.from(eventMap.entries()).map(
-          ([eventName, items]) => {
-            // If there's only one item for this event, return it as is
-            if (items.length === 1) {
-              return items[0];
-            }
-
-            // Helper function to safely join non-null values
-            const joinNonNull = (values: (string | null)[]) => {
-              const filteredValues = values.filter(
-                (v) => v !== null && v !== undefined && v !== ""
-              );
-              return filteredValues.length > 0
-                ? Array.from(new Set(filteredValues)).join(" & ")
-                : null;
-            };
-
-            // For multiple items with the same event name (ties)
-            return {
-              event: eventName,
-              // Check for ties in first place
-              firstName: joinNonNull(items.map((i) => i.firstName)),
-              firstHouse: joinNonNull(items.map((i) => i.firstHouse)),
-              // Check for ties in second place as well
-              secondName: joinNonNull(items.map((i) => i.secondName)),
-              secondHouse: joinNonNull(items.map((i) => i.secondHouse)),
-              // Check for ties in third place as well
-              thirdName: joinNonNull(items.map((i) => i.thirdName)),
-              thirdHouse: joinNonNull(items.map((i) => i.thirdHouse)),
-            };
-          }
-        );
-
-        setData(processedData);
+        setRawData(result);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
@@ -82,6 +37,212 @@ export default function LayatharangPage() {
 
     fetchData();
   }, []);
+
+  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFilter(e.target.value);
+  };
+
+  // Get unique house names from raw data for filter options
+  const getUniqueHouses = () => {
+    if (!rawData) return [];
+
+    const houses = new Set<string>();
+
+    // Process all house names in the data
+    rawData.forEach((item) => {
+      // Helper function to add individual houses from a potentially combined house string
+      const addHouses = (houseString: string | null) => {
+        if (!houseString) return;
+        // Split by " & " and add each house individually
+        houseString.split(" & ").forEach((house) => {
+          if (house.trim()) houses.add(house.trim());
+        });
+      };
+
+      // Process all position houses
+      addHouses(item.firstHouse);
+      addHouses(item.secondHouse);
+      addHouses(item.thirdHouse);
+    });
+
+    return Array.from(houses).sort();
+  };
+
+  // Get unique event types for filter options
+  const getUniqueEvents = () => {
+    if (!rawData) return [];
+
+    const events = new Set<string>();
+    rawData.forEach((item) => {
+      if (item.event) events.add(item.event);
+    });
+
+    return Array.from(events).sort();
+  };
+
+  // Create a new helper to get unique names
+  function getUniqueNames() {
+    if (!rawData) return [];
+    const names = new Set<string>();
+    rawData.forEach((item) => {
+      splitCombinedField(item.firstName).forEach((n) => names.add(n));
+      splitCombinedField(item.secondName).forEach((n) => names.add(n));
+      splitCombinedField(item.thirdName).forEach((n) => names.add(n));
+    });
+    return Array.from(names).sort();
+  }
+
+  // Helper to split " & "-separated strings
+  const splitCombinedField = (value: string | null) => {
+    if (!value) return [];
+    return value
+      .split(" & ")
+      .map((v) => v.trim())
+      .filter((v) => v);
+  };
+
+  // Define a type for the processed data items
+  type ProcessedItem = LayatharangData & {
+    allHouses?: string[];
+    allNames?: string[];
+    filteredHouse?: string | null;
+    filteredPositions?: string[];
+    filteredNames?: Record<string, string | null>;
+  };
+
+  // Filter raw data and then process it
+  const processedData = (): ProcessedItem[] => {
+    if (!rawData) return [];
+
+    // Step 1: Convert raw fields into arrays for easier filtering
+    const enrichedData = rawData.map((item) => ({
+      ...item,
+      allHouses: [
+        ...splitCombinedField(item.firstHouse),
+        ...splitCombinedField(item.secondHouse),
+        ...splitCombinedField(item.thirdHouse),
+      ],
+      allNames: [
+        ...splitCombinedField(item.firstName),
+        ...splitCombinedField(item.secondName),
+        ...splitCombinedField(item.thirdName),
+      ],
+    }));
+
+    // Step 2: Filter on raw house/name data
+    let filtered = enrichedData;
+
+    if (filter !== "all") {
+      // If filter is an event
+      if (getUniqueEvents().includes(filter)) {
+        filtered = enrichedData.filter((item) => item.event === filter);
+      }
+      // If filter matches a name
+      else if (getUniqueNames().includes(filter)) {
+        filtered = enrichedData.filter((item) =>
+          item.allNames.includes(filter)
+        );
+      } else {
+        // If filter is a house from raw houses
+        filtered = enrichedData.filter((item) =>
+          item.allHouses.includes(filter)
+        );
+
+        // Capture which positions this house took
+        filtered = filtered.map((item) => {
+          const positions: string[] = [];
+          const filteredNames: Record<string, string | null> = {};
+
+          if (
+            item.firstHouse &&
+            splitCombinedField(item.firstHouse).includes(filter)
+          ) {
+            positions.push("first");
+            filteredNames.firstName = item.firstName;
+          }
+          if (
+            item.secondHouse &&
+            splitCombinedField(item.secondHouse).includes(filter)
+          ) {
+            positions.push("second");
+            filteredNames.secondName = item.secondName;
+          }
+          if (
+            item.thirdHouse &&
+            splitCombinedField(item.thirdHouse).includes(filter)
+          ) {
+            positions.push("third");
+            filteredNames.thirdName = item.thirdName;
+          }
+
+          return {
+            ...item,
+            filteredHouse: filter,
+            filteredPositions: positions,
+            filteredNames,
+          };
+        });
+      }
+    }
+
+    // Step 3: Merge tied events after filtering
+    const eventMap = new Map<string, (typeof filtered)[number][]>();
+    filtered.forEach((item) => {
+      if (!eventMap.has(item.event)) eventMap.set(item.event, []);
+      eventMap.get(item.event)?.push(item);
+    });
+
+    // Helper to safely join as string | null rather than string | undefined
+    const joinNonNull = (vals: (string | null)[]): string | null => {
+      const joined = Array.from(new Set(vals.filter(Boolean))).join(" & ");
+      return joined ? joined : null;
+    };
+
+    return Array.from(eventMap.entries()).map(([eventName, items]) => {
+      if (items.length === 1) return items[0];
+
+      // Define a type that includes the filteredNames property
+      type EnrichedItem = LayatharangData & {
+        allHouses?: string[];
+        allNames?: string[];
+        filteredHouse?: string;
+        filteredPositions?: string[];
+        filteredNames?: Record<string, string | null>;
+      };
+
+      const allFilteredPositions = items
+        .flatMap((i) => i.filteredPositions || [])
+        .filter((pos, idx, arr) => arr.indexOf(pos) === idx);
+
+      const mergedFilteredNames: Record<string, string | null> = {};
+      items.forEach((i) => {
+        const enrichedItem = i as EnrichedItem;
+        if (enrichedItem.filteredNames) {
+          Object.entries(enrichedItem.filteredNames).forEach(([k, v]) => {
+            if (v) mergedFilteredNames[k] = v;
+          });
+        }
+      });
+
+      // Cast as ProcessedItem to ensure types align correctly
+      return {
+        event: eventName,
+        firstName: joinNonNull(items.map((i) => i.firstName)),
+        firstHouse: joinNonNull(items.map((i) => i.firstHouse)),
+        secondName: joinNonNull(items.map((i) => i.secondName)),
+        secondHouse: joinNonNull(items.map((i) => i.secondHouse)),
+        thirdName: joinNonNull(items.map((i) => i.thirdName)),
+        thirdHouse: joinNonNull(items.map((i) => i.thirdHouse)),
+        filteredHouse: filter !== "all" ? filter : null,
+        filteredPositions: allFilteredPositions.length
+          ? allFilteredPositions
+          : undefined,
+        filteredNames: Object.keys(mergedFilteredNames).length
+          ? mergedFilteredNames
+          : undefined,
+      } as ProcessedItem;
+    });
+  };
 
   if (isLoading) {
     return (
@@ -122,26 +283,82 @@ export default function LayatharangPage() {
           Layatharang
         </motion.h1>
 
-        <Link href="/" className="block w-full text-center mb-8">
+        <Link href="/" className="block w-full text-center mb-4">
           <button className="text-white/70 px-4 py-2 rounded-full hover:bg-white/10 transition-all duration-300">
             ← Back to Leaderboard
           </button>
         </Link>
 
-        {Array.isArray(data) && (
+        {/* Filter dropdown */}
+        <div className="flex justify-center mb-8">
+          <div className="relative w-full max-w-xs">
+            <select
+              value={filter}
+              onChange={handleFilterChange}
+              className="w-full px-4 py-2 rounded-lg bg-black/40 text-white border border-white/20 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-pink-500/50 transition-all"
+            >
+              <option value="all">All Events</option>
+              <optgroup label="Filter by House">
+                {getUniqueHouses().map((house) => (
+                  <option key={`house-${house}`} value={house}>
+                    {house}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Filter by Event">
+                {getUniqueEvents().map((event) => (
+                  <option key={`event-${event}`} value={event}>
+                    {event}
+                  </option>
+                ))}
+              </optgroup>
+              {/* Add filter by name */}
+              <optgroup label="Filter by Name">
+                {getUniqueNames().map((name) => (
+                  <option key={`name-${name}`} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {Array.isArray(rawData) && (
           <motion.div
             className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            {data.map((item, i) => {
+            {processedData().map((item, i) => {
               // Check if it's a group event
               const isGroupEvent = !(
                 item.firstName &&
                 item.secondName &&
                 item.thirdName
               );
+
+              // Check if we're filtering by house
+              const isHouseFiltered =
+                filter !== "all" && !getUniqueEvents().includes(filter);
+              const filteredPositions = item.filteredPositions || [];
 
               return (
                 <motion.div
@@ -159,86 +376,199 @@ export default function LayatharangPage() {
                       {isGroupEvent && (
                         <span className="text-pink-400 text-sm">(Group)</span>
                       )}
+                      {isHouseFiltered && filteredPositions.length > 1 && (
+                        <div className="text-pink-400 text-sm mt-1">
+                          {filter} - Multiple Placements
+                        </div>
+                      )}
+                      {isHouseFiltered && filteredPositions.length === 1 && (
+                        <div className="text-pink-400 text-sm mt-1">
+                          {filter} -{" "}
+                          {filteredPositions[0] === "first"
+                            ? "1st Place"
+                            : filteredPositions[0] === "second"
+                            ? "2nd Place"
+                            : "3rd Place"}
+                        </div>
+                      )}
                     </h2>
 
                     <div className="space-y-3">
-                      <div className="flex items-center space-x-2">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-amber-200 to-yellow-500 text-amber-900 flex items-center justify-center mr-2 shadow-md">
-                          <span
-                            className={`text-sm font-bold ${instrument.className}`}
-                          >
-                            1
-                          </span>
-                        </div>
-                        <div className="flex-grow">
-                          {isGroupEvent ? (
-                            <p className="text-white font-medium text-base">
-                              {item.firstHouse}
-                            </p>
-                          ) : (
-                            <>
-                              <p className="text-white font-medium">
-                                {item.firstName}
-                              </p>
-                              <p className="text-white/60 text-sm">
-                                {item.firstHouse}
-                              </p>
-                            </>
+                      {/* If house is filtered, show all positions where that house placed */}
+                      {isHouseFiltered ? (
+                        <>
+                          {filteredPositions.includes("first") && (
+                            <div className="flex items-center space-x-2">
+                              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-amber-200 to-yellow-500 text-amber-900 flex items-center justify-center mr-2 shadow-md">
+                                <span
+                                  className={`text-sm font-bold ${instrument.className}`}
+                                >
+                                  1
+                                </span>
+                              </div>
+                              <div className="flex-grow">
+                                {isGroupEvent ? (
+                                  <p className="text-white font-medium text-base">
+                                    {filter}
+                                  </p>
+                                ) : (
+                                  <>
+                                    <p className="text-white font-medium">
+                                      {/* Use the saved filtered name instead of the merged name */}
+                                      {item.filteredNames?.firstName ||
+                                        item.firstName}
+                                    </p>
+                                    <p className="text-white/60 text-sm">
+                                      {filter}
+                                    </p>
+                                  </>
+                                )}
+                              </div>
+                            </div>
                           )}
-                        </div>
-                      </div>
 
-                      <div className="flex items-center space-x-2">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800 flex items-center justify-center mr-2 shadow-md">
-                          <span
-                            className={`text-sm font-bold ${instrument.className}`}
-                          >
-                            2
-                          </span>
-                        </div>
-                        <div>
-                          {isGroupEvent ? (
-                            <p className="text-white font-medium text-base">
-                              {item.secondHouse}
-                            </p>
-                          ) : (
-                            <>
-                              <p className="text-white font-medium">
-                                {item.secondName}
-                              </p>
-                              <p className="text-white/60 text-sm">
-                                {item.secondHouse}
-                              </p>
-                            </>
+                          {filteredPositions.includes("second") && (
+                            <div className="flex items-center space-x-2">
+                              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800 flex items-center justify-center mr-2 shadow-md">
+                                <span
+                                  className={`text-sm font-bold ${instrument.className}`}
+                                >
+                                  2
+                                </span>
+                              </div>
+                              <div className="flex-grow">
+                                {isGroupEvent ? (
+                                  <p className="text-white font-medium text-base">
+                                    {filter}
+                                  </p>
+                                ) : (
+                                  <>
+                                    <p className="text-white font-medium">
+                                      {/* Use the saved filtered name instead of the merged name */}
+                                      {item.filteredNames?.secondName ||
+                                        item.secondName}
+                                    </p>
+                                    <p className="text-white/60 text-sm">
+                                      {filter}
+                                    </p>
+                                  </>
+                                )}
+                              </div>
+                            </div>
                           )}
-                        </div>
-                      </div>
 
-                      <div className="flex items-center space-x-2">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-amber-700 text-amber-100 flex items-center justify-center mr-2 shadow-md">
-                          <span
-                            className={`text-sm font-bold ${instrument.className}`}
-                          >
-                            3
-                          </span>
-                        </div>
-                        <div>
-                          {isGroupEvent ? (
-                            <p className="text-white font-medium text-base">
-                              {item.thirdHouse}
-                            </p>
-                          ) : (
-                            <>
-                              <p className="text-white font-medium">
-                                {item.thirdName}
-                              </p>
-                              <p className="text-white/60 text-sm">
-                                {item.thirdHouse}
-                              </p>
-                            </>
+                          {filteredPositions.includes("third") && (
+                            <div className="flex items-center space-x-2">
+                              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-amber-700 text-amber-100 flex items-center justify-center mr-2 shadow-md">
+                                <span
+                                  className={`text-sm font-bold ${instrument.className}`}
+                                >
+                                  3
+                                </span>
+                              </div>
+                              <div className="flex-grow">
+                                {isGroupEvent ? (
+                                  <p className="text-white font-medium text-base">
+                                    {filter}
+                                  </p>
+                                ) : (
+                                  <>
+                                    <p className="text-white font-medium">
+                                      {/* Use the saved filtered name instead of the merged name */}
+                                      {item.filteredNames?.thirdName ||
+                                        item.thirdName}
+                                    </p>
+                                    <p className="text-white/60 text-sm">
+                                      {filter}
+                                    </p>
+                                  </>
+                                )}
+                              </div>
+                            </div>
                           )}
-                        </div>
-                      </div>
+                        </>
+                      ) : (
+                        // Show all three placements when not filtering by house
+                        <>
+                          <div className="flex items-center space-x-2">
+                            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-amber-200 to-yellow-500 text-amber-900 flex items-center justify-center mr-2 shadow-md">
+                              <span
+                                className={`text-sm font-bold ${instrument.className}`}
+                              >
+                                1
+                              </span>
+                            </div>
+                            <div className="flex-grow">
+                              {isGroupEvent ? (
+                                <p className="text-white font-medium text-base">
+                                  {item.firstHouse}
+                                </p>
+                              ) : (
+                                <>
+                                  <p className="text-white font-medium">
+                                    {item.firstName}
+                                  </p>
+                                  <p className="text-white/60 text-sm">
+                                    {item.firstHouse}
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800 flex items-center justify-center mr-2 shadow-md">
+                              <span
+                                className={`text-sm font-bold ${instrument.className}`}
+                              >
+                                2
+                              </span>
+                            </div>
+                            <div>
+                              {isGroupEvent ? (
+                                <p className="text-white font-medium text-base">
+                                  {item.secondHouse}
+                                </p>
+                              ) : (
+                                <>
+                                  <p className="text-white font-medium">
+                                    {item.secondName}
+                                  </p>
+                                  <p className="text-white/60 text-sm">
+                                    {item.secondHouse}
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-amber-700 text-amber-100 flex items-center justify-center mr-2 shadow-md">
+                              <span
+                                className={`text-sm font-bold ${instrument.className}`}
+                              >
+                                3
+                              </span>
+                            </div>
+                            <div>
+                              {isGroupEvent ? (
+                                <p className="text-white font-medium text-base">
+                                  {item.thirdHouse}
+                                </p>
+                              ) : (
+                                <>
+                                  <p className="text-white font-medium">
+                                    {item.thirdName}
+                                  </p>
+                                  <p className="text-white/60 text-sm">
+                                    {item.thirdHouse}
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-400/0 via-pink-500/0 to-rose-400/0 opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
@@ -247,6 +577,18 @@ export default function LayatharangPage() {
               );
             })}
           </motion.div>
+        )}
+
+        {Array.isArray(rawData) && processedData().length === 0 && (
+          <div className="text-center py-10">
+            <p className="text-white/70">No events match your filter</p>
+            <button
+              onClick={() => setFilter("all")}
+              className="mt-2 text-pink-400 hover:text-pink-300"
+            >
+              Clear filter
+            </button>
+          </div>
         )}
       </main>
 

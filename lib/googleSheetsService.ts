@@ -140,6 +140,7 @@ export async function getChakravyuhEvents(): Promise<ChakravyuhData[]> {
       secondHouse: String(row[4] || ""),
       thirdName: String(row[5] || ""),
       thirdHouse: String(row[6] || ""),
+      filteredPositions: [], // Add the missing property
     }));
     console.log("Fetched Chakravyuh events from Google Sheets:", events);
 

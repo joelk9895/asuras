@@ -15,6 +15,7 @@ export default function ChakravyuhPage() {
   const [data, setData] = useState<ChakravyuhData[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<string>("all");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -68,7 +69,10 @@ export default function ChakravyuhPage() {
               // Check for ties in third place as well
               thirdName: joinNonNull(items.map((i) => i.thirdName)),
               thirdHouse: joinNonNull(items.map((i) => i.thirdHouse)),
-            };
+              // Add optional properties required by ChakravyuhData type
+              filteredHouse: null,
+              filteredPositions: [],
+            } as ChakravyuhData;
           }
         );
 
@@ -82,6 +86,72 @@ export default function ChakravyuhPage() {
 
     fetchData();
   }, []);
+
+  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFilter(e.target.value);
+  };
+
+  // Get unique house names from data for filter options
+  const getUniqueHouses = () => {
+    if (!data) return [];
+
+    const houses = new Set<string>();
+    data.forEach((item) => {
+      if (item.firstHouse) houses.add(item.firstHouse);
+      if (item.secondHouse) houses.add(item.secondHouse);
+      if (item.thirdHouse) houses.add(item.thirdHouse);
+    });
+
+    return Array.from(houses).sort();
+  };
+
+  // Get unique event types for filter options
+  const getUniqueEvents = () => {
+    if (!data) return [];
+
+    const events = new Set<string>();
+    data.forEach((item) => {
+      if (item.event) events.add(item.event);
+    });
+
+    return Array.from(events).sort();
+  };
+
+  // Filter the data based on selected filter
+  const filteredData = () => {
+    if (!data) return [];
+    if (filter === "all") return data;
+
+    // Check if we're filtering by an event
+    if (getUniqueEvents().includes(filter)) {
+      return data.filter((item) => item.event === filter);
+    }
+
+    // If we're filtering by house, show only events where that house placed
+    const houseEvents = data.filter(
+      (item) =>
+        item.firstHouse === filter ||
+        item.secondHouse === filter ||
+        item.thirdHouse === filter
+    );
+
+    // Transform the data to highlight the filtered house's placements
+    return houseEvents.map((item) => {
+      const eventCopy = { ...item };
+
+      // Get all positions where the filtered house appears
+      const positions = [];
+      if (item.firstHouse === filter) positions.push("first");
+      if (item.secondHouse === filter) positions.push("second");
+      if (item.thirdHouse === filter) positions.push("third");
+
+      // Set the house filter indicators
+      eventCopy.filteredHouse = filter;
+      eventCopy.filteredPositions = positions;
+
+      return eventCopy;
+    });
+  };
 
   if (isLoading) {
     return (
@@ -122,11 +192,54 @@ export default function ChakravyuhPage() {
           Chakravyuh
         </motion.h1>
 
-        <Link href="/" className="block w-full text-center mb-8">
+        <Link href="/" className="block w-full text-center mb-4">
           <button className="text-white/70 px-4 py-2 rounded-full hover:bg-white/10 transition-all duration-300">
             ← Back to Leaderboard
           </button>
         </Link>
+
+        {/* Filter dropdown */}
+        <div className="flex justify-center mb-8">
+          <div className="relative w-full max-w-xs">
+            <select
+              value={filter}
+              onChange={handleFilterChange}
+              className="w-full px-4 py-2 rounded-lg bg-black/40 text-white border border-white/20 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all"
+            >
+              <option value="all">All Events</option>
+              <optgroup label="Filter by House">
+                {getUniqueHouses().map((house) => (
+                  <option key={`house-${house}`} value={house}>
+                    {house}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Filter by Event">
+                {getUniqueEvents().map((event) => (
+                  <option key={`event-${event}`} value={event}>
+                    {event}
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
 
         {Array.isArray(data) && (
           <motion.div
@@ -135,13 +248,17 @@ export default function ChakravyuhPage() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            {data.map((item, i) => {
+            {filteredData().map((item, i) => {
               // Check if it's a group event
               const isGroupEvent = !(
                 item.firstName &&
                 item.secondName &&
                 item.thirdName
               );
+
+              // Check if we're filtering by house
+              const isHouseFiltered = getUniqueHouses().includes(filter);
+              const filteredPositions = item.filteredPositions || [];
 
               return (
                 <motion.div
@@ -159,86 +276,193 @@ export default function ChakravyuhPage() {
                       {isGroupEvent && (
                         <span className="text-green-400 text-sm">(Group)</span>
                       )}
+                      {isHouseFiltered && filteredPositions.length > 1 && (
+                        <div className="text-green-400 text-sm mt-1">
+                          {filter} - Multiple Placements
+                        </div>
+                      )}
+                      {isHouseFiltered && filteredPositions.length === 1 && (
+                        <div className="text-green-400 text-sm mt-1">
+                          {filter} -{" "}
+                          {filteredPositions[0] === "first"
+                            ? "1st Place"
+                            : filteredPositions[0] === "second"
+                            ? "2nd Place"
+                            : "3rd Place"}
+                        </div>
+                      )}
                     </h2>
 
                     <div className="space-y-3">
-                      <div className="flex items-center space-x-2">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-amber-200 to-yellow-500 text-amber-900 flex items-center justify-center mr-2 shadow-md">
-                          <span
-                            className={`text-sm font-bold ${instrument.className}`}
-                          >
-                            1
-                          </span>
-                        </div>
-                        <div className="flex-grow">
-                          {isGroupEvent ? (
-                            <p className="text-white font-medium text-base">
-                              {item.firstHouse}
-                            </p>
-                          ) : (
-                            <>
-                              <p className="text-white font-medium capitalize">
-                                {item.firstName?.toLowerCase()}
-                              </p>
-                              <p className="text-white/60 text-sm">
-                                {item.firstHouse}
-                              </p>
-                            </>
+                      {/* If house is filtered, show all positions where that house placed */}
+                      {isHouseFiltered ? (
+                        <>
+                          {filteredPositions.includes("first") && (
+                            <div className="flex items-center space-x-2">
+                              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-amber-200 to-yellow-500 text-amber-900 flex items-center justify-center mr-2 shadow-md">
+                                <span
+                                  className={`text-sm font-bold ${instrument.className}`}
+                                >
+                                  1
+                                </span>
+                              </div>
+                              <div className="flex-grow">
+                                {isGroupEvent ? (
+                                  <p className="text-white font-medium text-base">
+                                    {filter}
+                                  </p>
+                                ) : (
+                                  <>
+                                    <p className="text-white font-medium capitalize">
+                                      {item.firstName?.toLowerCase()}
+                                    </p>
+                                    <p className="text-white/60 text-sm">
+                                      {filter}
+                                    </p>
+                                  </>
+                                )}
+                              </div>
+                            </div>
                           )}
-                        </div>
-                      </div>
 
-                      <div className="flex items-center space-x-2">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800 flex items-center justify-center mr-2 shadow-md">
-                          <span
-                            className={`text-sm font-bold ${instrument.className}`}
-                          >
-                            2
-                          </span>
-                        </div>
-                        <div>
-                          {isGroupEvent ? (
-                            <p className="text-white font-medium text-base">
-                              {item.secondHouse}
-                            </p>
-                          ) : (
-                            <>
-                              <p className="text-white font-medium capitalize">
-                                {item.secondName?.toLowerCase()}
-                              </p>
-                              <p className="text-white/60 text-sm">
-                                {item.secondHouse}
-                              </p>
-                            </>
+                          {filteredPositions.includes("second") && (
+                            <div className="flex items-center space-x-2">
+                              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800 flex items-center justify-center mr-2 shadow-md">
+                                <span
+                                  className={`text-sm font-bold ${instrument.className}`}
+                                >
+                                  2
+                                </span>
+                              </div>
+                              <div className="flex-grow">
+                                {isGroupEvent ? (
+                                  <p className="text-white font-medium text-base">
+                                    {filter}
+                                  </p>
+                                ) : (
+                                  <>
+                                    <p className="text-white font-medium capitalize">
+                                      {item.secondName?.toLowerCase()}
+                                    </p>
+                                    <p className="text-white/60 text-sm">
+                                      {filter}
+                                    </p>
+                                  </>
+                                )}
+                              </div>
+                            </div>
                           )}
-                        </div>
-                      </div>
 
-                      <div className="flex items-center space-x-2">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-amber-700 text-amber-100 flex items-center justify-center mr-2 shadow-md">
-                          <span
-                            className={`text-sm font-bold ${instrument.className}`}
-                          >
-                            3
-                          </span>
-                        </div>
-                        <div>
-                          {isGroupEvent ? (
-                            <p className="text-white font-medium text-base">
-                              {item.thirdHouse}
-                            </p>
-                          ) : (
-                            <>
-                              <p className="text-white font-medium capitalize">
-                                {item.thirdName?.toLowerCase()}
-                              </p>
-                              <p className="text-white/60 text-sm">
-                                {item.thirdHouse}
-                              </p>
-                            </>
+                          {filteredPositions.includes("third") && (
+                            <div className="flex items-center space-x-2">
+                              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-amber-700 text-amber-100 flex items-center justify-center mr-2 shadow-md">
+                                <span
+                                  className={`text-sm font-bold ${instrument.className}`}
+                                >
+                                  3
+                                </span>
+                              </div>
+                              <div className="flex-grow">
+                                {isGroupEvent ? (
+                                  <p className="text-white font-medium text-base">
+                                    {filter}
+                                  </p>
+                                ) : (
+                                  <>
+                                    <p className="text-white font-medium capitalize">
+                                      {item.thirdName?.toLowerCase()}
+                                    </p>
+                                    <p className="text-white/60 text-sm">
+                                      {filter}
+                                    </p>
+                                  </>
+                                )}
+                              </div>
+                            </div>
                           )}
-                        </div>
-                      </div>
+                        </>
+                      ) : (
+                        // Show all three placements when not filtering by house
+                        <>
+                          <div className="flex items-center space-x-2">
+                            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-amber-200 to-yellow-500 text-amber-900 flex items-center justify-center mr-2 shadow-md">
+                              <span
+                                className={`text-sm font-bold ${instrument.className}`}
+                              >
+                                1
+                              </span>
+                            </div>
+                            <div className="flex-grow">
+                              {isGroupEvent ? (
+                                <p className="text-white font-medium text-base">
+                                  {item.firstHouse}
+                                </p>
+                              ) : (
+                                <>
+                                  <p className="text-white font-medium capitalize">
+                                    {item.firstName?.toLowerCase()}
+                                  </p>
+                                  <p className="text-white/60 text-sm">
+                                    {item.firstHouse}
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800 flex items-center justify-center mr-2 shadow-md">
+                              <span
+                                className={`text-sm font-bold ${instrument.className}`}
+                              >
+                                2
+                              </span>
+                            </div>
+                            <div>
+                              {isGroupEvent ? (
+                                <p className="text-white font-medium text-base">
+                                  {item.secondHouse}
+                                </p>
+                              ) : (
+                                <>
+                                  <p className="text-white font-medium capitalize">
+                                    {item.secondName?.toLowerCase()}
+                                  </p>
+                                  <p className="text-white/60 text-sm">
+                                    {item.secondHouse}
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-amber-700 text-amber-100 flex items-center justify-center mr-2 shadow-md">
+                              <span
+                                className={`text-sm font-bold ${instrument.className}`}
+                              >
+                                3
+                              </span>
+                            </div>
+                            <div>
+                              {isGroupEvent ? (
+                                <p className="text-white font-medium text-base">
+                                  {item.thirdHouse}
+                                </p>
+                              ) : (
+                                <>
+                                  <p className="text-white font-medium capitalize">
+                                    {item.thirdName?.toLowerCase()}
+                                  </p>
+                                  <p className="text-white/60 text-sm">
+                                    {item.thirdHouse}
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/0 via-green-500/0 to-emerald-400/0 opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
@@ -247,6 +471,18 @@ export default function ChakravyuhPage() {
               );
             })}
           </motion.div>
+        )}
+
+        {Array.isArray(data) && filteredData().length === 0 && (
+          <div className="text-center py-10">
+            <p className="text-white/70">No events match your filter</p>
+            <button
+              onClick={() => setFilter("all")}
+              className="mt-2 text-green-400 hover:text-green-300"
+            >
+              Clear filter
+            </button>
+          </div>
         )}
       </main>
 

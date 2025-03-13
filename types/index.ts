@@ -31,6 +31,8 @@ export interface LayatharangData {
   secondHouse: string | null;
   thirdName: string | null;
   thirdHouse: string | null;
+  filteredHouse?: string | null;
+  filteredPositions?: string[];
 }
 
 export interface ChakravyuhData {
@@ -41,4 +43,6 @@ export interface ChakravyuhData {
   secondHouse: string | null;
   thirdName: string | null;
   thirdHouse: string | null;
+  filteredHouse?: string | null;
+  filteredPositions?: string[];
 }

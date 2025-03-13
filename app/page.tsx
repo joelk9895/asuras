@@ -18,6 +18,12 @@ export default function Home() {
   >("overall");
 
   // Sort houses by points and add rank
+  // const updatedHouses = houses.map((house) => {
+  //   if (house.name === "Adharvas") {
+  //     return { ...house, points: house.points + 80 };
+  //   }
+  //   return house;
+  // });
   const sortedHouses = [...houses]
     .sort((a, b) => b.points - a.points)
     .map((house, index) => ({ ...house, rank: index + 1 }));
