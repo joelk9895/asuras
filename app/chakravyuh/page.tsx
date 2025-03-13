@@ -31,7 +31,8 @@ export default function ChakravyuhPage() {
         const eventMap = new Map<string, ChakravyuhData[]>();
 
         // Group by event name
-        result.forEach((item: ChakravyuhData) => {
+        // Process in reverse order
+        [...result].reverse().forEach((item: ChakravyuhData) => {
           if (!eventMap.has(item.event)) {
             eventMap.set(item.event, []);
           }

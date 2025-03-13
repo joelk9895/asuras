@@ -31,7 +31,7 @@ export default function LayatharangPage() {
         const eventMap = new Map<string, LayatharangData[]>();
 
         // Group by event name
-        result.forEach((item: LayatharangData) => {
+        result.reverse().forEach((item: LayatharangData) => {
           if (!eventMap.has(item.event)) {
             eventMap.set(item.event, []);
           }
