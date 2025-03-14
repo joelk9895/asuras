@@ -12,57 +12,56 @@ const instrument = Instrument_Serif({
 });
 
 export default function Home() {
-  const { houses, loading, error } = useHouses();
-  const [activeTab, setActiveTab] = useState<
-    "overall" | "layatharang" | "chakravyuh"
-  >("overall");
+  // const { houses, loading, error } = useHouses();
+  // const [activeTab, setActiveTab] = useState<
+  //   "overall" | "layatharang" | "chakravyuh"
+  // >("overall");
 
-  // Sort houses by points and add rank
-  const sortedHouses = [...houses]
-    .sort((a, b) => b.points - a.points)
-    .map((house, index) => ({ ...house, rank: index + 1 }));
+  // // Sort houses by points and add rank
+  // const sortedHouses = [...houses]
+  //   .sort((a, b) => b.points - a.points)
+  //   .map((house, index) => ({ ...house, rank: index + 1 }));
 
-  const topThree = sortedHouses.slice(0, 3);
-  const maxPoints =
-    houses.length > 0 ? Math.max(...houses.map((house) => house.points)) : 1;
+  // const topThree = sortedHouses.slice(0, 3);
+  // const maxPoints =
+  //   houses.length > 0 ? Math.max(...houses.map((house) => house.points)) : 1;
 
-  const maxLayaPoints =
-    houses.length > 0
-      ? Math.max(...houses.map((house) => house.layatharang))
-      : 1;
+  // const maxLayaPoints =
+  //   houses.length > 0
+  //     ? Math.max(...houses.map((house) => house.layatharang))
+  //     : 1;
 
-  const maxChakPoints =
-    houses.length > 0
-      ? Math.max(...houses.map((house) => house.chakravyuh))
-      : 1;
+  // const maxChakPoints =
+  //   houses.length > 0
+  //     ? Math.max(...houses.map((house) => house.chakravyuh))
+  //     : 1;
 
-  const layatharangSortedHouses = [...houses].sort(
-    (a, b) => b.layatharang - a.layatharang
-  );
-  const chakravyuhSortedHouses = [...houses].sort(
-    (a, b) => b.chakravyuh - a.chakravyuh
-  );
+  // const layatharangSortedHouses = [...houses].sort(
+  //   (a, b) => b.layatharang - a.layatharang
+  // );
+  // const chakravyuhSortedHouses = [...houses].sort(
+  //   (a, b) => b.chakravyuh - a.chakravyuh
+  // );
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-gray-900 to-black flex items-center justify-center">
-        <div className="text-white text-xl">
-          <span className="inline-block animate-spin mr-3">⏳</span>
-          Loading house data...
-        </div>
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-gray-900 to-black flex items-center justify-center">
+  //       <div className="text-white text-xl">
+  //         <span className="inline-block animate-spin mr-3">⏳</span>
+  //         Loading house data...
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-gray-900 to-black px-3 py-4 sm:px-4 sm:py-6 md:p-8">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-gray-900 to-black px-3 py-4 sm:px-4 sm:py-6 md:p-8 flex flex-col items-center justify-center">
       <img
         src="/logo.png"
         className="w-screen h-screen object-cover opacity-20 fixed top-0 left-0 z-0"
         alt="Background logo"
       />
-
-      <main className="mx-auto max-w-5xl relative z-10">
+      {/*   <main className="mx-auto max-w-5xl relative z-10">
         {error && (
           <div className="bg-red-500/20 border border-red-500/50 text-white px-4 py-2 rounded-lg mb-4 text-center">
             {error}
@@ -354,7 +353,6 @@ export default function Home() {
                 transition={{ delay: index * 0.05, duration: 0.4 }}
                 className="relative flex items-center p-3 sm:p-4 md:p-6 border-t border-white/5 hover:bg-white/5 transition-all duration-300 group"
               >
-                {/* Rest of the chakravyuh item code remains unchanged but with the same sizing adjustments */}
                 <div
                   className={`
                     flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-14 md:h-14 rounded-lg sm:rounded-xl md:rounded-2xl bg-gradient-to-br
@@ -423,6 +421,58 @@ export default function Home() {
             ))}
           </motion.div>
         )}
+      </main> */}
+      <main className="mx-auto max-w-5xl relative z-10 text-center px-6">
+        <motion.div
+          className="bg-black/30 backdrop-blur-xl rounded-2xl shadow-lg border border-white/10 p-6 sm:p-8 md:p-10"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          <motion.h1
+            className={`text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-6 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-transparent bg-clip-text ${instrument.className}`}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            Somethings are meant to be kept secret 😜
+          </motion.h1>
+
+          <motion.p
+            className="text-white/80 text-base sm:text-lg md:text-xl leading-relaxed max-w-3xl mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+          >
+            Hey there! 👀 We know you&apos;re eagerly waiting, but some
+            surprises are just too good to spill early! 🚀 For now, the
+            scorecard remains under wraps 🕵️‍♂️, safely hidden away until the big
+            reveal.
+          </motion.p>
+
+          <motion.p
+            className="mt-4 text-white/80 text-base sm:text-lg md:text-xl leading-relaxed font-medium"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.7 }}
+          >
+            Trust us, it&apos;ll be worth the wait! Stay tuned, keep the
+            excitement alive, and get ready for the grand announcement! 🎉✨
+          </motion.p>
+
+          <motion.div
+            className="mt-8 bg-white/10 backdrop-blur-sm rounded-xl p-4 inline-block"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.9 }}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <span className={`${instrument.className} text-lg text-amber-300`}>
+              Until then… any guesses? 👀😏
+            </span>
+          </motion.div>
+        </motion.div>
       </main>
       <motion.div
         className="relative z-50 w-full max-w-xs mx-auto mt-6 sm:mt-10"
@@ -434,7 +484,7 @@ export default function Home() {
           <div className="group bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-300 hover:from-amber-300 hover:via-yellow-500 hover:to-amber-400 text-amber-900 font-medium px-4 sm:px-6 py-2 sm:py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-center transform hover:-translate-y-1 active:translate-y-0 text-sm sm:text-base">
             <span className="block">Play a Game</span>
             <span className="text-xs opacity-75">
-              while waiting for scores to update?
+              while waiting for scores to be revealed?
             </span>
           </div>
         </Link>
